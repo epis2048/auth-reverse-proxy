@@ -1,7 +1,7 @@
 listenAddress: 0.0.0.0:10086
 proxy:
   name: proxyName
-  auth: token/cas
+  auth: token/jwt/cas
   session:
     name: session_auth-reverse-proxy
     secret: secret
@@ -12,6 +12,10 @@ proxy:
       format: json/xml
       jsonPath: data.id
       xmlPath: //cas:attribute[@name='id']
+  jwt:
+    valid:
+      secret: your jwt secret
+      jsonPath: data.id
   cas:
     endPoint: https://cas.localhost/cas
     xmlPath: //cas:attribute[@name='id']

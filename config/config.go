@@ -16,8 +16,7 @@ var Config struct {
 			Name   string `yaml:"name"`
 			Secret string `yaml:"secret"`
 		} `yaml:"session"`
-		UnAuthedResponse string      `yaml:"unAuthedResponse"`
-		Jwt              interface{} `yaml:"jwt"`
+		UnAuthedResponse string `yaml:"unAuthedResponse"`
 		Token            struct {
 			Valid struct {
 				URL      string `yaml:"url"`
@@ -26,6 +25,12 @@ var Config struct {
 				XMLPath  string `yaml:"xmlPath"`
 			} `yaml:"valid"`
 		} `yaml:"token"`
+		Jwt struct {
+			Valid struct {
+				Secret   string `yaml:"secret"`
+				JSONPath string `yaml:"jsonPath"`
+			} `yaml:"valid"`
+		} `yaml:"jwt"`
 		Cas struct {
 			EndPoint string `yaml:"endPoint"`
 			XMLPath  string `yaml:"id"`

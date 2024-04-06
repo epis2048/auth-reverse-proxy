@@ -22,6 +22,8 @@ func StartServer() {
 	switch config.Config.Proxy.Auth {
 	case "token":
 		authMiddleWare = auth.Token{}
+	case "jwt":
+		authMiddleWare = auth.Jwt{}
 	case "cas":
 		authMiddleWare = auth.Cas{}
 	default:
