@@ -1,0 +1,28 @@
+listenAddress: 0.0.0.0:10086
+proxy:
+  name: proxyName
+  auth: token/cas
+  session:
+    name: session_auth-reverse-proxy
+    secret: secret
+  unAuthedResponse: jump/text
+  token:
+    valid:
+      url: http://token.localhost/api/user?token={token}
+      format: json/xml
+      jsonPath: data.id
+      xmlPath: //cas:attribute[@name='id']
+  cas:
+    endPoint: https://cas.localhost/cas
+    xmlPath: //cas:attribute[@name='id']
+  reverse:
+    backend: http://localhost:10010/
+    rewrite:
+      header:
+        -
+          name: Location
+          from: http://localhost:10010/
+          to:  http://localhost:11111/
+    url:  
+      - /link/*a
+      - /*a
