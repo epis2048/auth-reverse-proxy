@@ -8,9 +8,9 @@ import (
 	"github.com/hertz-contrib/reverseproxy"
 )
 
-func RewriteHeader(proxy *reverseproxy.ReverseProxy) {
+func RewriteHeader(proxy *reverseproxy.ReverseProxy, proxyConfig config.ProxyConfig, reverseIndex int) {
 	proxy.SetModifyResponse(func(resp *protocol.Response) error {
-		for _, v := range config.Config.Proxy.Reverse.Rewrite.Header {
+		for _, v := range proxyConfig.Reverse[reverseIndex].Rewrite.Header {
 			header := resp.Header.Get(v.Name)
 			if header != "" {
 				header = strings.ReplaceAll(header, v.From, v.To)

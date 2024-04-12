@@ -12,9 +12,19 @@ import (
 	"github.com/cloudwego/hertz/pkg/route"
 )
 
-type Token struct{}
+type Token struct {
+	ProxyConfig config.ProxyConfig
+}
 
-func (t Token) Init() {}
+func NewToken(proxyConfig config.ProxyConfig) Auth {
+	var token Token
+	token.ProxyConfig = proxyConfig
+	return token
+}
+
+func (t Token) GetConfig() config.ProxyConfig {
+	return t.ProxyConfig
+}
 
 func (t Token) RegisterRouter(g *route.RouterGroup) {}
 
@@ -22,16 +32,16 @@ func (t Token) HandlerLogin() app.HandlerFunc {
 	return func(context context.Context, c *app.RequestContext) {
 		var uid string
 		var err error
-		resp := utils.RequestGet(strings.ReplaceAll(config.Config.Proxy.Token.Valid.URL, "{token}", c.Query("token")))
+		resp := utils.RequestGet(strings.ReplaceAll(t.ProxyConfig.Token.Valid.URL, "{token}", c.Query("token")))
 
-		switch config.Config.Proxy.Token.Valid.Format {
+		switch t.ProxyConfig.Token.Valid.Format {
 		case "json":
-			uid, err = utils.ParseUIDFromJson(resp.Body(), config.Config.Proxy.Token.Valid.JSONPath)
+			uid, err = utils.ParseUIDFromJson(resp.Body(), t.ProxyConfig.Token.Valid.JSONPath)
 			if err != nil {
 				c.AbortWithMsg(err.Error(), consts.StatusOK)
 			}
 		case "xml":
-			uid, err = utils.ParseUIDFromXml(resp.Body(), config.Config.Proxy.Token.Valid.XMLPath)
+			uid, err = utils.ParseUIDFromXml(resp.Body(), t.ProxyConfig.Token.Valid.XMLPath)
 			if err != nil {
 				c.AbortWithMsg(err.Error(), consts.StatusOK)
 			}

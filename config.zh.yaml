@@ -1,0 +1,57 @@
+# 每一项是一个独立的反向代理配置文件
+-
+  # 该代理的名称，对内容无要求
+  name: proxyName
+  # 本地监听地址，可以使用Nginx等反向代理到这个地址
+  listenAddress: 0.0.0.0:10086
+  # 身份认证方法，支持token/jwt/cas
+  auth: token/jwt/cas
+  session:
+    # 通过cookie保存Session，这里是SessionID在cookie中的名称
+    name: session_auth-reverse-proxy
+    # Session加密密钥，可以使用 cat /proc/sys/kernel/random/uuid | md5sum |cut -c 1-17 生成
+    secret: secret
+  # 用户未经认证时的处理方式，支持jump/text，jump只有非Token/Jwt模式下才支持
+  unAuthedResponse: jump/text
+  # 只有身份认证方法是token的时候该字段才生效
+  token:
+    valid:
+      # 程序会使用GET访问这个URL，并根据返回值来验证token的有效性。其中token内容字段用{token}代替
+      url: http://token.localhost/api/user?token={token}
+      # 解析上述URL返回值的方式，支持xml/json
+      format: json/xml
+      # 上述URL返回JSON中存放UID的路径，程序使用Jeffail/gabs库解析JSON，请传入gabs库Path()方法可以识别的路径
+      jsonPath: data.id
+      # 上述URL返回XML中存放UID的路径，程序使用beevik/etree库解析XML，请传入etree库FindElement()方法可以识别的路径
+      xmlPath: //cas:attribute[@name='id']
+  # 只有身份认证方法是jwt的时候该字段才生效
+  jwt:
+    valid:
+      # JWT公钥
+      secret: your jwt secret
+      # JWT Payload段JSON格式中存放UID的路径，程序使用Jeffail/gabs库解析JSON，请传入gabs库Path()方法可以识别的路径
+      jsonPath: data.id
+  # 只有身份认证方法是cas的时候该字段才生效
+  cas:
+    # CAS系统的接入点，程序会自动根据CAS协议跳转login接口或使用serviceValidate接口
+    endPoint: https://cas.localhost/cas
+    # CAS协议中serviceValidate接口返回XML中存放UID的路径，程序使用beevik/etree库解析XML，请传入etree库FindElement()方法可以识别的路径
+    xmlPath: //cas:attribute[@name='id']
+  # 反向代理程序配置，每一项对应一个后端地址
+  reverse:
+    -
+      # 反向代理类型，http或者websocket
+      type: http/websocket
+      # 反向代理后端，如果是websocket需要以ws://开头
+      backend: http://localhost:10010
+      # 重写规则，会直接替换，不支持正则表达式或通配符
+      rewrite:
+        header:
+          -
+            name: Location
+            from: http://localhost:10010/
+            to:  http://localhost:11111/
+      # 需要被反向代理的地址，受限于Hertz API，对于通配符后要加任意字母
+      url:
+        - /link/*a
+        - /*a

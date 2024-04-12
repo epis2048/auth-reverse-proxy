@@ -12,13 +12,14 @@ import (
 )
 
 type Auth interface {
-	Init()
-
 	// handlers
 	RegisterRouter(g *route.RouterGroup)
 	HandlerLogin() app.HandlerFunc
 	HandlerLogout() app.HandlerFunc
 	HandlerLoginStatus() app.HandlerFunc
+
+	// configs
+	GetConfig() config.ProxyConfig
 
 	// public functions
 	UnAuthed() app.HandlerFunc
@@ -48,7 +49,7 @@ func DefaultSessionMiddleWareAuth(a Auth) app.HandlerFunc {
 
 func DefaultUnAuthed(a Auth, msg string) app.HandlerFunc {
 	return func(ctx context.Context, c *app.RequestContext) {
-		switch config.Config.Proxy.UnAuthedResponse {
+		switch a.GetConfig().UnAuthedResponse {
 		case "text":
 			c.AbortWithMsg(msg, consts.StatusOK)
 		case "jump":

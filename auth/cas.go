@@ -11,9 +11,19 @@ import (
 	"github.com/cloudwego/hertz/pkg/route"
 )
 
-type Cas struct{}
+type Cas struct {
+	ProxyConfig config.ProxyConfig
+}
 
-func (t Cas) Init() {}
+func NewCas(proxyConfig config.ProxyConfig) Auth {
+	var cas Cas
+	cas.ProxyConfig = proxyConfig
+	return cas
+}
+
+func (t Cas) GetConfig() config.ProxyConfig {
+	return t.ProxyConfig
+}
 
 func (t Cas) RegisterRouter(g *route.RouterGroup) {}
 
@@ -21,9 +31,9 @@ func (t Cas) HandlerLogin() app.HandlerFunc {
 	return func(context context.Context, c *app.RequestContext) {
 		var uid string
 		var err error
-		resp := utils.RequestGet(config.Config.Proxy.Cas.EndPoint + "/serviceValidate?service=" + string(c.URI().Scheme()) + "://" + string(c.URI().Host()) + "/__auth/login" + "&ticket=" + c.Query("ticket"))
+		resp := utils.RequestGet(t.ProxyConfig.Cas.EndPoint + "/serviceValidate?service=" + string(c.URI().Scheme()) + "://" + string(c.URI().Host()) + "/__auth/login" + "&ticket=" + c.Query("ticket"))
 
-		uid, err = utils.ParseUIDFromXml(resp.Body(), config.Config.Proxy.Cas.XMLPath)
+		uid, err = utils.ParseUIDFromXml(resp.Body(), t.ProxyConfig.Cas.XMLPath)
 		if err != nil {
 			c.AbortWithMsg(err.Error(), consts.StatusOK)
 		}
@@ -50,7 +60,7 @@ func (t Cas) HandlerLoginStatus() app.HandlerFunc {
 }
 
 func (t Cas) UnAuthed() app.HandlerFunc {
-	return DefaultUnAuthed(t, config.Config.Proxy.Cas.EndPoint+"/login?service={callback}")
+	return DefaultUnAuthed(t, t.ProxyConfig.Cas.EndPoint+"/login?service={callback}")
 }
 
 func (t Cas) MiddlewareAuth() app.HandlerFunc {

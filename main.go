@@ -15,5 +15,11 @@ func parseFlags() {
 func main() {
 	parseFlags()
 	config.Init(configFile)
-	StartServer()
+	for _, proxyConfig := range config.Config {
+		go func(proxyConfig config.ProxyConfig) {
+			StartServer(proxyConfig)
+		}(proxyConfig)
+	}
+	ch := make(chan string)
+	<-ch
 }

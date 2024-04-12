@@ -9,8 +9,8 @@ import (
 	"github.com/hertz-contrib/sessions/cookie"
 )
 
-func Init(h *server.Hertz) {
-	h.Use(sessions.New(config.Config.Proxy.Session.Name, cookie.NewStore([]byte(config.Config.Proxy.Session.Secret))))
+func Init(proxyConfig config.ProxyConfig, h *server.Hertz) {
+	h.Use(sessions.New(proxyConfig.Session.Name, cookie.NewStore([]byte(proxyConfig.Session.Secret))))
 }
 
 func Set(c *app.RequestContext, key string, value string) {

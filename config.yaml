@@ -1,32 +1,57 @@
-listenAddress: 0.0.0.0:10086
-proxy:
+# Each item represents an independent reverse proxy configuration file.
+-
+  # Name of the proxy, no content requirement.
   name: proxyName
+  # Local listening address, can be reverse proxied to this address using Nginx or similar.
+  listenAddress: 0.0.0.0:10086
+  # Authentication method, supports token/jwt/cas.
   auth: token/jwt/cas
   session:
+    # Save session via cookie, session ID's name in the cookie.
     name: session_auth-reverse-proxy
+    # Session encryption key, can be generated using cat /proc/sys/kernel/random/uuid | md5sum |cut -c 1-17
     secret: secret
+  # Handling method for unauthenticated users, supports jump/text. Jump only supported when not using Token/Jwt.
   unAuthedResponse: jump/text
+  # This field only takes effect when the authentication method is token.
   token:
     valid:
+      # The program will access this URL via GET and validate the token's validity based on the return value. Use {token} to represent the token content field.
       url: http://token.localhost/api/user?token={token}
+      # Format of parsing the return value of the above URL, supports xml/json.
       format: json/xml
+      # Path to the UID stored in the JSON returned by the above URL. The program uses Jeffail/gabs library to parse JSON, please provide a path that the gabs library's Path() method can recognize.
       jsonPath: data.id
+      # Path to the UID stored in the XML returned by the above URL. The program uses beevik/etree library to parse XML, please provide a path that the etree library's FindElement() method can recognize.
       xmlPath: //cas:attribute[@name='id']
+  # This field only takes effect when the authentication method is jwt.
   jwt:
     valid:
+      # JWT public key.
       secret: your jwt secret
+      # Path to the UID stored in the JSON format of the JWT payload section. The program uses Jeffail/gabs library to parse JSON, please provide a path that the gabs library's Path() method can recognize.
       jsonPath: data.id
+  # This field only takes effect when the authentication method is cas.
   cas:
+    # Entry point of the CAS system, the program will automatically redirect to the login interface or use the serviceValidate interface based on the CAS protocol.
     endPoint: https://cas.localhost/cas
+    # Path to the UID stored in the XML returned by the serviceValidate interface in the CAS protocol. The program uses beevik/etree library to parse XML, please provide a path that the etree library's FindElement() method can recognize.
     xmlPath: //cas:attribute[@name='id']
+  # Reverse proxy program configuration, each item corresponds to a backend address.
   reverse:
-    backend: http://localhost:10010/
-    rewrite:
-      header:
-        -
-          name: Location
-          from: http://localhost:10010/
-          to:  http://localhost:11111/
-    url:  
-      - /link/*a
-      - /*a
+    - 
+      # Type of reverse proxy, http or websocket.
+      type: http/websocket
+      # Backend for reverse proxy, should start with ws:// if it's websocket.
+      backend: http://localhost:10010
+      # Rewrite rules, directly replace, does not support regular expressions or wildcards.
+      rewrite:
+        header:
+          - 
+            name: Location
+            from: http://localhost:10010/
+            to: http://localhost:11111/
+      # Addresses to be reverse proxied, limited by Hertz API, add any letter after wildcard.
+      url:
+        - /link/*a
+        - /*a

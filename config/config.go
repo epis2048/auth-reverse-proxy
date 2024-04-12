@@ -7,52 +7,58 @@ import (
 	"github.com/spf13/viper"
 )
 
-var Config struct {
+type ProxyConfig struct {
+	Name          string `yaml:"name"`
 	ListenAddress string `yaml:"listenAddress"`
-	Proxy         struct {
-		Name    string `yaml:"name"`
-		Auth    string `yaml:"auth"`
-		Session struct {
-			Name   string `yaml:"name"`
-			Secret string `yaml:"secret"`
-		} `yaml:"session"`
-		UnAuthedResponse string `yaml:"unAuthedResponse"`
-		Token            struct {
-			Valid struct {
-				URL      string `yaml:"url"`
-				Format   string `yaml:"format"`
-				JSONPath string `yaml:"jsonPath"`
-				XMLPath  string `yaml:"xmlPath"`
-			} `yaml:"valid"`
-		} `yaml:"token"`
-		Jwt struct {
-			Valid struct {
-				Secret   string `yaml:"secret"`
-				JSONPath string `yaml:"jsonPath"`
-			} `yaml:"valid"`
-		} `yaml:"jwt"`
-		Cas struct {
-			EndPoint string `yaml:"endPoint"`
-			XMLPath  string `yaml:"id"`
-		} `yaml:"cas"`
-		Reverse struct {
-			Backend string `yaml:"backend"`
-			Rewrite struct {
-				Header []struct {
-					Name string `yaml:"name"`
-					From string `yaml:"from"`
-					To   string `yaml:"to"`
-				} `yaml:"header"`
-			} `yaml:"rewrite"`
-			URL []string `yaml:"url"`
-		} `yaml:"reverse"`
-	} `yaml:"proxy"`
+	Auth          string `yaml:"auth"`
+	Session       struct {
+		Name   string `yaml:"name"`
+		Secret string `yaml:"secret"`
+	} `yaml:"session"`
+	UnAuthedResponse string `yaml:"unAuthedResponse"`
+	Token            struct {
+		Valid struct {
+			URL      string `yaml:"url"`
+			Format   string `yaml:"format"`
+			JSONPath string `yaml:"jsonPath"`
+			XMLPath  string `yaml:"xmlPath"`
+		} `yaml:"valid"`
+	} `yaml:"token"`
+	Jwt struct {
+		Valid struct {
+			Secret   string `yaml:"secret"`
+			JSONPath string `yaml:"jsonPath"`
+		} `yaml:"valid"`
+	} `yaml:"jwt"`
+	Cas struct {
+		EndPoint string `yaml:"endPoint"`
+		XMLPath  string `yaml:"xmlPath"`
+	} `yaml:"cas"`
+	Reverse []struct {
+		Type    string `yaml:"type"`
+		Backend string `yaml:"backend"`
+		Rewrite struct {
+			Header []struct {
+				Name string `yaml:"name"`
+				From string `yaml:"from"`
+				To   string `yaml:"to"`
+			} `yaml:"header"`
+		} `yaml:"rewrite"`
+		URL []string `yaml:"url"`
+	} `yaml:"reverse"`
 }
 
+var instances struct {
+	Instances []ProxyConfig `yaml:"instances"`
+}
+
+var Config []ProxyConfig
+
 func rebuildConfig(v *viper.Viper) {
-	if err := v.Unmarshal(&Config); err != nil {
+	if err := v.Unmarshal(&instances); err != nil {
 		log.Fatalln(err)
 	}
+	Config = instances.Instances
 }
 
 func Init(configFile string) {

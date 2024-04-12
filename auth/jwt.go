@@ -14,9 +14,19 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type Jwt struct{}
+type Jwt struct {
+	ProxyConfig config.ProxyConfig
+}
 
-func (t Jwt) Init() {}
+func NewJwt(proxyConfig config.ProxyConfig) Auth {
+	var jwt Jwt
+	jwt.ProxyConfig = proxyConfig
+	return jwt
+}
+
+func (t Jwt) GetConfig() config.ProxyConfig {
+	return t.ProxyConfig
+}
 
 func (t Jwt) RegisterRouter(g *route.RouterGroup) {}
 
@@ -26,7 +36,7 @@ func (t Jwt) HandlerLogin() app.HandlerFunc {
 		var err error
 		tokenString := c.Query("token")
 		_, err = jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			return []byte(config.Config.Proxy.Jwt.Valid.Secret), nil
+			return []byte(t.ProxyConfig.Jwt.Valid.Secret), nil
 		})
 		if err != nil {
 			c.AbortWithMsg("JWT is invalid: "+err.Error(), consts.StatusOK)
@@ -38,7 +48,7 @@ func (t Jwt) HandlerLogin() app.HandlerFunc {
 			c.AbortWithMsg("Failed to decode payload segment: "+err.Error(), consts.StatusOK)
 			return
 		}
-		uid, err = utils.ParseUIDFromJson(decodedPayload, config.Config.Proxy.Jwt.Valid.JSONPath)
+		uid, err = utils.ParseUIDFromJson(decodedPayload, t.ProxyConfig.Jwt.Valid.JSONPath)
 		if err != nil {
 			c.AbortWithMsg("Parse UID From JWT err: "+err.Error(), consts.StatusOK)
 			return

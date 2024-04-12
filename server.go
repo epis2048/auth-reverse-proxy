@@ -11,27 +11,21 @@ import (
 	"github.com/hertz-contrib/reverseproxy"
 )
 
-func StartServer() {
-	h := server.New(server.WithHostPorts(config.Config.ListenAddress))
-	proxy, err := reverseproxy.NewSingleHostReverseProxy(config.Config.Proxy.Reverse.Backend)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
+func StartServer(proxyConfig config.ProxyConfig) {
+	h := server.New(server.WithHostPorts(proxyConfig.ListenAddress))
 	var authMiddleWare auth.Auth
-	switch config.Config.Proxy.Auth {
+	switch proxyConfig.Auth {
 	case "token":
-		authMiddleWare = auth.Token{}
+		authMiddleWare = auth.NewToken(proxyConfig)
 	case "jwt":
-		authMiddleWare = auth.Jwt{}
+		authMiddleWare = auth.NewJwt(proxyConfig)
 	case "cas":
-		authMiddleWare = auth.Cas{}
+		authMiddleWare = auth.NewCas(proxyConfig)
 	default:
 		log.Fatalln("unknown auth type")
 	}
 
-	session.Init(h)
-	authMiddleWare.Init()
+	session.Init(proxyConfig, h)
 
 	g := h.Group("/__auth")
 	g.GET("/login", authMiddleWare.HandlerLogin())
@@ -39,10 +33,22 @@ func StartServer() {
 	g.GET("/logout", authMiddleWare.HandlerLogout())
 	authMiddleWare.RegisterRouter(g)
 
-	rewrite.RewriteHeader(proxy)
-	for _, u := range config.Config.Proxy.Reverse.URL {
-		h.Any(u, authMiddleWare.MiddlewareAuth(), proxy.ServeHTTP)
+	for i, r := range proxyConfig.Reverse {
+		switch r.Type {
+		case "http":
+			proxy, err := reverseproxy.NewSingleHostReverseProxy(r.Backend)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			rewrite.RewriteHeader(proxy, proxyConfig, i)
+			for _, u := range r.URL {
+				h.Any(u, authMiddleWare.MiddlewareAuth(), proxy.ServeHTTP)
+			}
+		case "websocket":
+			proxy := reverseproxy.NewWSReverseProxy(r.Backend)
+			for _, u := range r.URL {
+				h.GET(u, authMiddleWare.MiddlewareAuth(), proxy.ServeHTTP)
+			}
+		}
 	}
-
-	h.Spin()
 }
