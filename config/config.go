@@ -37,6 +37,8 @@ type ProxyConfig struct {
 	Reverse []struct {
 		Type    string `yaml:"type"`
 		Backend string `yaml:"backend"`
+		Code    int    `yaml:"code"`
+		To      string `yaml:"to"`
 		Rewrite struct {
 			Header []struct {
 				Name string `yaml:"name"`

@@ -37,12 +37,16 @@ func StartServer(proxyConfig config.ProxyConfig) {
 
 	for i, r := range proxyConfig.Reverse {
 		switch r.Type {
+		case "http_jump":
+			for _, u := range r.URL {
+				h.Any(u, rewrite.Jump(r.Code, r.To))
+			}
 		case "http":
 			proxy, err := reverseproxy.NewSingleHostReverseProxy(r.Backend)
 			if err != nil {
 				log.Fatalln(err)
 			}
-			rewrite.RewriteHeader(proxy, proxyConfig, i)
+			rewrite.Rewrite(proxy, proxyConfig, i)
 			for _, u := range r.URL {
 				h.Any(u, authMiddleWare.MiddlewareAuth(), proxy.ServeHTTP)
 			}
