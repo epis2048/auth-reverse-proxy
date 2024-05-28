@@ -15,6 +15,8 @@ func StartServer(proxyConfig config.ProxyConfig) {
 	h := server.New(server.WithHostPorts(proxyConfig.ListenAddress))
 	var authMiddleWare auth.Auth
 	switch proxyConfig.Auth {
+	case "none":
+		authMiddleWare = auth.NewNone(proxyConfig)
 	case "token":
 		authMiddleWare = auth.NewToken(proxyConfig)
 	case "jwt":
@@ -51,4 +53,5 @@ func StartServer(proxyConfig config.ProxyConfig) {
 			}
 		}
 	}
+	h.Run()
 }
